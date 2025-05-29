@@ -5,10 +5,15 @@ An intelligent question-and-answer web application built with React Router, Type
 ## Features
 
 - **Multi-Category Support**: Ask questions across 6 specialized categories
+- **AI Integration**: Connected to Claude and Perplexity APIs for intelligent answers
+- **Real-time Status**: API connection status monitoring
+- **Error Handling**: Comprehensive error boundaries and user feedback
+- **Question Input**: Validated question submission with character limits
+- **Answer Display**: Clean, formatted AI response presentation
 - **Responsive Design**: Beautiful, mobile-first interface with Tailwind CSS
 - **TypeScript**: Full type safety and enhanced developer experience
 - **Modern React**: Built with React Router 7 and modern React patterns
-- **AI Integration Ready**: Prepared for integration with Claude and Perplexity APIs
+- **Docker Support**: Containerized deployment ready
 
 ## Categories
 
@@ -34,9 +39,15 @@ An intelligent question-and-answer web application built with React Router, Type
 smart-qa-web-app/
 ├── app/
 │   ├── components/
+│   │   ├── AnswerDisplay.tsx       # AI answer display component
+│   │   ├── ApiStatus.tsx           # API connection status indicator
 │   │   ├── CategorySelector.tsx    # Category selection component
-│   │   └── Layout.tsx              # Main layout wrapper
+│   │   ├── ErrorBoundary.tsx       # Error handling wrapper
+│   │   ├── Layout.tsx              # Main layout wrapper
+│   │   ├── QAApp.tsx               # Main Q&A application component
+│   │   └── QuestionInput.tsx       # Question input form
 │   ├── lib/
+│   │   ├── aiService.ts           # AI API integration service
 │   │   └── constants.ts           # App configuration and categories
 │   ├── routes/
 │   │   └── home.tsx              # Main home page route
@@ -46,8 +57,17 @@ smart-qa-web-app/
 │   │   ├── logo-dark.svg         # Dark theme logo
 │   │   ├── logo-light.svg        # Light theme logo
 │   │   └── welcome.tsx           # Welcome page component
-│   └── app.css                   # Global styles and Tailwind imports
+│   ├── app.css                   # Global styles and Tailwind imports
+│   ├── root.tsx                  # Root component with providers
+│   └── routes.ts                 # Route configuration
+├── .dockerignore
+├── .env                          # Environment variables
+├── .gitignore
+├── Dockerfile                    # Docker configuration
+├── package-lock.json
 ├── package.json
+├── react-router.config.ts        # React Router configuration
+├── tsconfig.json                 # TypeScript configuration
 └── README.md
 ```
 
@@ -75,7 +95,13 @@ smart-qa-web-app/
    pnpm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+4. **Start the development server**
    ```bash
    npm run dev
    # or
@@ -84,8 +110,9 @@ smart-qa-web-app/
    pnpm dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to `http://localhost:5173` to see the application.
+
 
 ## Development
 
@@ -99,12 +126,44 @@ smart-qa-web-app/
 
 ### Key Components
 
+#### QAApp
+Main application component that orchestrates the question-answer flow:
+- Manages application state
+- Coordinates between input, processing, and display
+- Handles AI service integration
+
+#### QuestionInput
+Interactive question input form with:
+- Character count validation
+- Category-aware submission
+- Loading states during processing
+- Error handling and user feedback
+
+#### AnswerDisplay
+Sophisticated answer presentation featuring:
+- Formatted AI responses
+- Source attribution (Claude/Perplexity)
+- Timestamp information
+- Copy-to-clipboard functionality
+
+#### ApiStatus
+Real-time API connection monitoring:
+- Service availability indicators
+- Connection health checks
+- Visual status feedback
+
 #### CategorySelector
 Interactive category selection with visual feedback and hover effects. Each category has:
 - Unique color scheme
 - Descriptive icon
 - Hover animations
 - Selected state styling
+
+#### ErrorBoundary
+Comprehensive error handling wrapper:
+- Catches and displays React errors gracefully
+- Provides fallback UI for broken components
+- Helps maintain app stability
 
 #### Layout
 Responsive layout wrapper providing:
@@ -126,6 +185,21 @@ export const APP_CONFIG = {
 };
 ```
 
+**Environment Variables:**
+Create a `.env` file in the root directory:
+```env
+CLAUDE_API_KEY=your_claude_api_key_here
+PERPLEXITY_API_KEY=your_perplexity_api_key_here
+```
+
+### AI Service Configuration
+
+The `aiService.ts` handles API integrations. Configure your preferred AI providers and manage:
+- API endpoints and authentication
+- Request/response formatting
+- Error handling and retries
+- Rate limiting and timeouts
+
 ### Adding New Categories
 
 To add a new category:
@@ -146,22 +220,28 @@ The app uses Tailwind CSS with a custom theme:
 ## Future Enhancements
 
 ### Planned Features
-- [ ] Question input form with validation
-- [ ] AI API integration (Claude/Perplexity)
 - [ ] Question history and favorites
-- [ ] Real-time typing indicators
+- [ ] Advanced answer formatting and citations
+- [ ] Multi-language support
+- [ ] Answer comparison between AI providers
+- [ ] User preferences and customization
+- [ ] Question templates and suggestions
+- [ ] Export functionality (PDF, markdown)
+- [ ] Real-time collaboration features
 - [ ] Answer rating and feedback system
 - [ ] Dark/light mode toggle
-- [ ] User authentication
+- [ ] User authentication and profiles
 - [ ] Question sharing functionality
 
 ### Technical Improvements
-- [ ] Add comprehensive error handling
-- [ ] Implement loading states
-- [ ] Add unit and integration tests
+- [ ] Comprehensive test coverage (unit, integration, e2e)
+- [ ] Performance monitoring and analytics
+- [ ] Advanced caching strategies
+- [ ] Offline functionality with service workers
 - [ ] Set up CI/CD pipeline
-- [ ] Optimize bundle size
-- [ ] Add Progressive Web App features
+- [ ] Bundle size optimization
+- [ ] Progressive Web App features
+- [ ] Enhanced error reporting and logging
 
 
 ## License
@@ -177,4 +257,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with React Router, Tailwind CSS, and AI APIs**
+**Built using React Router, Tailwind CSS, and AI APIs**
