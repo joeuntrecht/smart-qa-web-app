@@ -1,79 +1,129 @@
+import Anthropic from '@anthropic-ai/sdk';
 import type { Answer, Category } from "~/types/types";
 
-// Mock responses for different categories
-const MOCK_RESPONSES: Record<Category, string[]> = {
-    'general': [
-      "That's a great question! Based on current knowledge, here's what I can tell you...",
-      "Let me break this down for you in a clear and helpful way...",
-      "This is an interesting topic that many people ask about. Here's my perspective..."
-    ],
-    'real-estate': [
-      "In the real estate market, several factors come into play. Location, market conditions, and timing are crucial...",
-      "Real estate investment requires careful consideration of market trends, property values, and long-term potential...",
-      "When it comes to property decisions, it's important to analyze both current market data and future projections..."
-    ],
-    'finance': [
-      "From a financial perspective, this involves understanding risk management, diversification, and your investment timeline...",
-      "Financial planning requires balancing growth potential with risk tolerance. Here's what you should consider...",
-      "Smart money management involves creating a strategy that aligns with your goals and risk profile..."
-    ],
-    'career-advice': [
-      "Career development is a journey that requires strategic thinking. Consider your long-term goals and skill development...",
-      "In today's job market, adaptability and continuous learning are key. Here's my advice for your situation...",
-      "Building a successful career involves networking, skill development, and strategic decision-making..."
-    ],
-    'technology': [
-      "Technology is rapidly evolving, and staying current is important. Here's what you need to know about this topic...",
-      "In the tech landscape, understanding both current trends and emerging technologies is crucial...",
-      "This technology question touches on important concepts that are shaping our digital future..."
-    ],
-    'health': [
-      "Health and wellness involve multiple factors including lifestyle, diet, exercise, and mental well-being...",
-      "When it comes to health topics, it's always best to consult with healthcare professionals, but here's some general information...",
-      "Maintaining good health requires a holistic approach considering various aspects of wellness..."
-    ]
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+    apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
+    dangerouslyAllowBrowser: true // Required for client-side usage
+  });
+  
+  // Category-specific system prompts for better responses
+  const CATEGORY_PROMPTS: Record<Category, string> = {
+    'general': 'You are a helpful AI assistant. Provide clear, accurate, and comprehensive answers to general questions.',
+    'real-estate': 'You are a knowledgeable real estate expert. Provide insights on property markets, investment strategies, buying/selling tips, and market trends. Always remind users to consult with licensed professionals for specific transactions.',
+    'finance': 'You are a financial advisor AI. Provide guidance on personal finance, investing, budgeting, and financial planning. Always include disclaimers about consulting with licensed financial professionals for personalized advice.',
+    'career-advice': 'You are a career counselor and professional development expert. Provide guidance on job searching, career transitions, skill development, workplace issues, and professional growth strategies.',
+    'technology': 'You are a technology expert. Provide information about current tech trends, programming concepts, software recommendations, and digital solutions. Keep explanations accessible to different technical skill levels.',
+    'health': 'You are a health information assistant. Provide general wellness information, but always emphasize that your advice should not replace professional medical consultation. Include disclaimers about seeking professional medical help for health concerns.'
   };
   
-  // Simulate API delay
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  
+  // Real Claude API integration
   export async function getAIAnswer(
     question: string, 
     category: Category
   ): Promise<Answer> {
-    // Simulate API call delay
-    await delay(2000 + Math.random() * 2000); // 2-4 seconds
+    // Check if API key is available
+    if (!import.meta.env.VITE_ANTHROPIC_API_KEY) {
+      console.warn('No API key found, falling back to mock response');
+      return getMockAnswer(question, category);
+    }
+  
+    try {
+      const systemPrompt = CATEGORY_PROMPTS[category];
+      
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022', // Updated to latest model
+        max_tokens: 1000,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: question
+          }
+        ]
+      });
+  
+      // Properly type-guard and extract text from Claude's response
+      const answerText = response.content
+        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+        .map(block => block.text)
+        .join('\n');
+  
+      return {
+        id: crypto.randomUUID(),
+        questionId: crypto.randomUUID(),
+        text: answerText,
+        timestamp: new Date(),
+        source: 'claude'
+      };
+  
+    } catch (error) {
+      console.error('Claude API error:', error);
+      
+      // Fallback to mock response on error
+      console.warn('Falling back to mock response due to API error');
+      return getMockAnswer(question, category);
+    }
+  }
+  
+  // Keep mock responses as fallback
+  async function getMockAnswer(question: string, category: Category): Promise<Answer> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Get random response for category
-    const responses = MOCK_RESPONSES[category];
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    // Create a more detailed response based on the question
-    const detailedResponse = `${randomResponse}
-  
-Regarding your specific question about "${question.slice(0, 50)}${question.length > 50 ? '...' : ''}", here are some key points to consider:
-  
-  • Understanding the context is important for making informed decisions
-  • Consider multiple perspectives and available options
-  • Research from reliable sources can provide additional insights
-  • Professional advice may be beneficial for complex situations
-  
-This is a mock response for development purposes. In the production version, this would be powered by Claude or Perplexity AI to provide real, intelligent answers to your questions.`;
+    const mockResponses = {
+      'general': "This is a mock response. To get real AI answers, add your Claude API key to the .env file.",
+      'real-estate': "Mock real estate advice. Add your Claude API key to get expert real estate insights.",
+      'finance': "Mock financial guidance. Add your Claude API key to get personalized financial advice.",
+      'career-advice': "Mock career advice. Add your Claude API key to get professional career guidance.",
+      'technology': "Mock tech information. Add your Claude API key to get current technology insights.",
+      'health': "Mock health information. Add your Claude API key to get comprehensive health guidance."
+    };
   
     return {
       id: crypto.randomUUID(),
       questionId: crypto.randomUUID(),
-      text: detailedResponse,
+      text: `${mockResponses[category]}\n\nYour question: "${question}"\n\nTo enable real Claude AI responses:\n1. Get an API key from https://console.anthropic.com/\n2. Add VITE_ANTHROPIC_API_KEY=your_key to your .env file\n3. Restart your development server`,
       timestamp: new Date(),
-      source: 'claude' // Mock source
+      source: 'claude'
     };
   }
   
-  // Future: Real AI service integration
+  // Alternative: Direct Claude API call (for future use)
   export async function getClaudeAnswer(question: string, category: Category): Promise<Answer> {
-    // TODO: Implement Claude API integration
-    // This would use the Claude API to get real answers
-    throw new Error('Claude API integration not yet implemented');
+    if (!import.meta.env.VITE_ANTHROPIC_API_KEY) {
+      throw new Error('Claude API key not configured');
+    }
+  
+    const systemPrompt = CATEGORY_PROMPTS[category];
+    
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022', // Updated to latest model
+      max_tokens: 1000,
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: question
+        }
+      ]
+    });
+  
+    // Properly type-guard and extract text from Claude's response
+    const answerText = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map(block => block.text)
+      .join('\n');
+  
+    return {
+      id: crypto.randomUUID(),
+      questionId: crypto.randomUUID(),
+      text: answerText,
+      timestamp: new Date(),
+      source: 'claude'
+    };
   }
   
   export async function getPerplexityAnswer(question: string, category: Category): Promise<Answer> {

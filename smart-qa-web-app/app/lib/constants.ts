@@ -1,6 +1,3 @@
-// app/lib/constants.ts
-
-
 import type { CategoryInfo, Category } from "~/types/types";
 
 export const CATEGORIES: Record<Category, CategoryInfo> = {
